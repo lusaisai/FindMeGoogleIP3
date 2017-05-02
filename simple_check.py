@@ -6,6 +6,8 @@ import socket
 import ssl
 import json
 
+PARALLELISM = 10
+
 
 def download_dns_servers(domain):
     dns_servers = set()
@@ -21,7 +23,7 @@ def download_dns_servers(domain):
 
 def download_all_dns_servers(domains):
     dns_servers = set()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLELISM) as executor:
         download_futures = [executor.submit(download_dns_servers, domain) for domain in domains]
         for download_future in concurrent.futures.as_completed(download_futures):
             for dns_server in download_future.result():
@@ -47,7 +49,7 @@ def make_dns_query(dns_server):
 
 def make_all_dns_query(dns_servers):
     ips = set()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLELISM) as executor:
         dns_futures = [executor.submit(make_dns_query, dns_server) for dns_server in dns_servers]
         for dns_future in concurrent.futures.as_completed(dns_futures):
             if dns_future.result():
@@ -70,7 +72,7 @@ def ssl_check(ip):
 
 def ssl_check_all(ips):
     verified_ips = set()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLELISM) as executor:
         ip_futures = [executor.submit(ssl_check, ip) for ip in ips]
         for ip_future in concurrent.futures.as_completed(ip_futures):
             if ip_future.result():
@@ -84,5 +86,5 @@ if __name__ == '__main__':
     dns_servers = download_all_dns_servers(domains)
     ips = make_all_dns_query(dns_servers)
     verified_ips = ssl_check_all(ips)
-    print('+' * 88)
-    print(json.dumps(list(verified_ips)))
+    print('=' * 88)
+    print(json.dumps(list(verified_ips), sort_keys=True, indent=4))
