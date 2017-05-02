@@ -80,7 +80,7 @@ def ssl_check_all(ips):
 
 
 if __name__ == '__main__':
-    domains = ['kr', 'tw']
+    domains = ['kr', 'tw', 'la', 'vn', 'th', 'kh', 'my', 'ph', 'sg', 'id', 'ru']
     dns_servers = download_all_dns_servers(domains)
     ips = make_all_dns_query(dns_servers)
     verified_ips = ssl_check_all(ips)
