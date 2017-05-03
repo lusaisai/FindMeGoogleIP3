@@ -5,6 +5,7 @@ import dns.exception
 import socket
 import ssl
 import json
+import os
 
 PARALLELISM = 10
 
@@ -14,7 +15,7 @@ def download_dns_servers(domain):
     url = 'https://public-dns.info/nameserver/%s.txt' % domain
 
     print("downloading dns server list from %s" % url)
-    with urllib.request.urlopen(url) as f:
+    with urllib.request.urlopen(url, timeout=5) as f:
         for server in f:
             dns_servers.add(server.strip())
 
@@ -22,6 +23,8 @@ def download_dns_servers(domain):
 
 
 def download_all_dns_servers(domains):
+    os.environ['http_proxy'] = 'http://localhost:8087'
+    os.environ['https_proxy'] = 'http://localhost:8087'
     dns_servers = set()
     with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLELISM) as executor:
         download_futures = [executor.submit(download_dns_servers, domain) for domain in domains]
@@ -65,6 +68,7 @@ def ssl_check(ip):
     try:
         print('ssl check for ip %s' % ip)
         s.connect((ip, 443))
+        s.close()
         return ip
     except (ssl.CertificateError, ssl.SSLError, socket.timeout, OSError):
         return None
