@@ -41,7 +41,7 @@ def make_dns_query(dns_server):
     dns_client.lifetime = 5
     try:
         print('making dns query to %s' % dns_server)
-        result = dns_client.query('www.google.com')
+        result = dns_client.query('google.com')
         if len(result) > 0:
             return [str(ip) for ip in result]
         else:
@@ -63,7 +63,7 @@ def make_all_dns_query(dns_servers):
 
 
 def ssl_check(ip):
-    socket.setdefaulttimeout(2)
+    socket.setdefaulttimeout(5)
     s = ssl.SSLContext().wrap_socket(socket.socket(), server_hostname='google.com')
     try:
         print('ssl check for ip %s' % ip)
@@ -85,10 +85,22 @@ def ssl_check_all(ips):
     return verified_ips
 
 
+def write_into_gae_user_json(ips):
+    json_file = r'C:\Projects\goproxy_windows_amd64\gae.user.json'
+
+    with open(json_file) as f:
+        config = json.load(f)
+        config['HostMap']['google_hk'] = list(ips)
+
+    with open(json_file, 'w') as f:
+        json.dump(config, f, sort_keys=True, indent=4, separators=(',', ': '))
+        print('Written %s ips into %s' % (len(ips), json_file))
+
+
 if __name__ == '__main__':
-    domains = ['kr', 'tw', 'la', 'vn', 'th', 'kh', 'my', 'ph', 'sg', 'id', 'ru']
+    # domains = ['kr', 'tw', 'la', 'vn', 'th', 'kh', 'my', 'ph', 'sg', 'id', 'ru']
+    domains = ['la']
     dns_servers = download_all_dns_servers(domains)
     ips = make_all_dns_query(dns_servers)
     verified_ips = ssl_check_all(ips)
-    print('=' * 88)
-    print(json.dumps(list(verified_ips), sort_keys=True, indent=4))
+    write_into_gae_user_json(verified_ips)
